@@ -22,65 +22,64 @@ public class NXTMessageUtil {
 	// (http://www.lejos.org)
 
 	// Command types constants. Indicates type of packet being sent or received.
-	public static byte DIRECT_COMMAND_REPLY = 0x00;
-	public static byte SYSTEM_COMMAND_REPLY = 0x01;
-	public static byte REPLY_COMMAND = 0x02;
-	public static byte DIRECT_COMMAND_NOREPLY = (byte) 0x80; // Avoids ~100ms
-																// latency
-	public static byte SYSTEM_COMMAND_NOREPLY = (byte) 0x81; // Avoids ~100ms
-																// latency
+	private static final byte DIRECT_COMMAND_REPLY = 0x00;
+	private static final byte SYSTEM_COMMAND_REPLY = 0x01;
+	private static final byte REPLY_COMMAND = 0x02;
+	private static final byte DIRECT_COMMAND_NOREPLY = (byte) 0x80;
+	private static final byte SYSTEM_COMMAND_NOREPLY = (byte) 0x81;
 
 	// Direct Commands
-	public static final byte START_PROGRAM = 0x00;
-	public static final byte STOP_PROGRAM = 0x01;
-	public static final byte PLAY_SOUND_FILE = 0x02;
-	public static final byte PLAY_TONE = 0x03;
-	public static final byte SET_OUTPUT_STATE = 0x04;
-	public static final byte SET_INPUT_MODE = 0x05;
-	public static final byte GET_OUTPUT_STATE = 0x06;
-	public static final byte GET_INPUT_VALUES = 0x07;
-	public static final byte RESET_SCALED_INPUT_VALUE = 0x08;
-	public static final byte MESSAGE_WRITE = 0x09;
-	public static final byte RESET_MOTOR_POSITION = 0x0A;
-	public static final byte GET_BATTERY_LEVEL = 0x0B;
-	public static final byte STOP_SOUND_PLAYBACK = 0x0C;
-	public static final byte KEEP_ALIVE = 0x0D;
-	public static final byte LS_GET_STATUS = 0x0E;
-	public static final byte LS_WRITE = 0x0F;
-	public static final byte LS_READ = 0x10;
-	public static final byte GET_CURRENT_PROGRAM_NAME = 0x11;
-	public static final byte MESSAGE_READ = 0x13;
+	private static final byte START_PROGRAM = 0x00;
+	private static final byte STOP_PROGRAM = 0x01;
+	private static final byte PLAY_SOUND_FILE = 0x02;
+	private static final byte PLAY_TONE = 0x03;
+	private static final byte SET_OUTPUT_STATE = 0x04;
+	private static final byte SET_INPUT_MODE = 0x05;
+	private static final byte GET_OUTPUT_STATE = 0x06;
+	private static final byte GET_INPUT_VALUES = 0x07;
+	private static final byte RESET_SCALED_INPUT_VALUE = 0x08;
+	private static final byte MESSAGE_WRITE = 0x09;
+	private static final byte RESET_MOTOR_POSITION = 0x0A;
+	private static final byte GET_BATTERY_LEVEL = 0x0B;
+	private static final byte STOP_SOUND_PLAYBACK = 0x0C;
+	private static final byte KEEP_ALIVE = 0x0D;
+	private static final byte LS_GET_STATUS = 0x0E;
+	private static final byte LS_WRITE = 0x0F;
+	private static final byte LS_READ = 0x10;
+	private static final byte GET_CURRENT_PROGRAM_NAME = 0x11;
+	private static final byte MESSAGE_READ = 0x13;
 
 	// System Commands:
-	public static final byte OPEN_READ = (byte) 0x80;
-	public static final byte OPEN_WRITE = (byte) 0x81;
-	public static final byte READ = (byte) 0x82;
-	public static final byte WRITE = (byte) 0x83;
-	public static final byte CLOSE = (byte) 0x84;
-	public static final byte DELETE = (byte) 0x85;
-	public static final byte FIND_FIRST = (byte) 0x86;
-	public static final byte FIND_NEXT = (byte) 0x87;
-	public static final byte GET_FIRMWARE_VERSION = (byte) 0x88;
-	public static final byte OPEN_WRITE_LINEAR = (byte) 0x89;
-	public static final byte OPEN_READ_LINEAR = (byte) 0x8A;
-	public static final byte OPEN_WRITE_DATA = (byte) 0x8B;
-	public static final byte OPEN_APPEND_DATA = (byte) 0x8C;
-	public static final byte BOOT = (byte) 0x97;
-	public static final byte SET_BRICK_NAME = (byte) 0x98;
-	public static final byte GET_DEVICE_INFO = (byte) 0x9B;
-	public static final byte DELETE_USER_FLASH = (byte) 0xA0;
-	public static final byte POLL_COMMAND_LENGTH = (byte) 0xA1;
-	public static final byte POLL_COMMAND = (byte) 0xA2;
-	public static final byte BLUETOOTH_FACTORY_RESET = (byte) 0xA4;
+	private static final byte OPEN_READ = (byte) 0x80;
+	private static final byte OPEN_WRITE = (byte) 0x81;
+	private static final byte READ = (byte) 0x82;
+	private static final byte WRITE = (byte) 0x83;
+	private static final byte CLOSE = (byte) 0x84;
+	private static final byte DELETE = (byte) 0x85;
+	private static final byte FIND_FIRST = (byte) 0x86;
+	private static final byte FIND_NEXT = (byte) 0x87;
+	private static final byte GET_FIRMWARE_VERSION = (byte) 0x88;
+	private static final byte OPEN_WRITE_LINEAR = (byte) 0x89;
+	private static final byte OPEN_READ_LINEAR = (byte) 0x8A;
+	private static final byte OPEN_WRITE_DATA = (byte) 0x8B;
+	private static final byte OPEN_APPEND_DATA = (byte) 0x8C;
+	private static final byte BOOT = (byte) 0x97;
+	private static final byte SET_BRICK_NAME = (byte) 0x98;
+	private static final byte GET_DEVICE_INFO = (byte) 0x9B;
+	private static final byte DELETE_USER_FLASH = (byte) 0xA0;
+	private static final byte POLL_COMMAND_LENGTH = (byte) 0xA1;
+	private static final byte POLL_COMMAND = (byte) 0xA2;
+	private static final byte BLUETOOTH_FACTORY_RESET = (byte) 0xA4;
 
 	// Error codes
-	public static final byte MAILBOX_EMPTY = (byte) 0x40;
-	public static final byte FILE_NOT_FOUND = (byte) 0x86;
-	public static final byte INSUFFICIENT_MEMORY = (byte) 0xFB;
-	public static final byte DIRECTORY_FULL = (byte) 0xFC;
-	public static final byte UNDEFINED_ERROR = (byte) 0x8A;
-	public static final byte NOT_IMPLEMENTED = (byte) 0xFD;
+	private static final byte MAILBOX_EMPTY = (byte) 0x40;
+	private static final byte FILE_NOT_FOUND = (byte) 0x86;
+	private static final byte INSUFFICIENT_MEMORY = (byte) 0xFB;
+	private static final byte DIRECTORY_FULL = (byte) 0xFC;
+	private static final byte UNDEFINED_ERROR = (byte) 0x8A;
+	private static final byte NOT_IMPLEMENTED = (byte) 0xFD;
 
+	// TODO Need firmware code for RobotC
 	// Firmware codes
 	public static byte[] FIRMWARE_VERSION_LEJOSMINDDROID = { 0x6c, 0x4d, 0x49,
 			0x64 };
@@ -163,6 +162,21 @@ public class NXTMessageUtil {
 		return message;
 	}
 
+	public static byte[] getMessageWriteMessage(int inbox, byte[] messageToSend) {
+		byte[] message = new byte[messageToSend.length+4];
+
+		message[0] = DIRECT_COMMAND_NOREPLY;
+		message[1] = MESSAGE_WRITE;
+		
+		message[2] = (byte) inbox;
+		
+		message[3] = (byte)messageToSend.length;
+
+		System.arraycopy(messageToSend, 0, message, 4, messageToSend.length);
+		
+		return message;
+	}
+	
 	public static byte[] getStartProgramMessage(String programName) {
 		byte[] message = new byte[22];
 
