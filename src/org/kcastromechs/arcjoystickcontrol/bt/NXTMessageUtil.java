@@ -14,7 +14,7 @@
 // TODO Reconstruct to support english decoding of messages (in and out)
 // TODO Add in methods to support message writing
 
-package org.kcastromechs.arcjoystickcontrol.util;
+package org.kcastromechs.arcjoystickcontrol.bt;
 
 public class NXTMessageUtil {
 
