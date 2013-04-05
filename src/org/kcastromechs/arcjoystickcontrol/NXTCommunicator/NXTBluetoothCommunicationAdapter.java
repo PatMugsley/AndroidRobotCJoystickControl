@@ -11,7 +11,7 @@
  *
  **/
 
-package org.kcastromechs.arcjoystickcontrol.bt;
+package org.kcastromechs.arcjoystickcontrol.NXTCommunicator;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -34,7 +34,7 @@ import org.kcastromechs.arcjoystickcontrol.*;
  * Objects of this class can either be run as standalone thread or controlled by
  * the owners, i.e. calling the send/recive methods by themselves.
  */
-public class NXTBTCommunicator extends Thread {
+public class NXTBluetoothCommunicationAdapter extends Thread {
 	public static final int MOTOR_A = 0;
 	public static final int MOTOR_B = 1;
 	public static final int MOTOR_C = 2;
@@ -82,7 +82,7 @@ public class NXTBTCommunicator extends Thread {
 
 	private byte[] returnMessage;
 
-	public NXTBTCommunicator(Handler uiHandler, BluetoothAdapter btAdapter,
+	public NXTBluetoothCommunicationAdapter(Handler uiHandler, BluetoothAdapter btAdapter,
 			Resources resources) {
 		this.uiHandler = uiHandler;
 		this.btAdapter = btAdapter;

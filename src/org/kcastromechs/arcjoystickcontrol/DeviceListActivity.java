@@ -18,7 +18,7 @@ import android.app.Activity;
 
 import java.util.Set;
 
-import org.kcastromechs.arcjoystickcontrol.bt.NXTBTCommunicator;
+import org.kcastromechs.arcjoystickcontrol.NXTCommunicator.NXTBluetoothCommunicationAdapter;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -113,7 +113,7 @@ public class DeviceListActivity extends Activity {
             findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
             for (BluetoothDevice device : pairedDevices) {
                 // only add LEGO devices
-                if (device.getAddress().startsWith(NXTBTCommunicator.OUI_LEGO)) {
+                if (device.getAddress().startsWith(NXTBluetoothCommunicationAdapter.OUI_LEGO)) {
                     legoDevicesFound = true;
                     mPairedDevicesArrayAdapter.add(device.getName() + "-" + device.getAddress());
                 }

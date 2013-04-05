@@ -2,7 +2,7 @@ package org.kcastromechs.arcjoystickcontrol;
 
 import java.io.IOException;
 
-import org.kcastromechs.arcjoystickcontrol.bt.NXTBTCommunicator;
+import org.kcastromechs.arcjoystickcontrol.NXTCommunicator.NXTBluetoothCommunicationAdapter;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
     private boolean pairing;
     private static boolean btOnByUs = false;
 	
-	private NXTBTCommunicator myNXTBTCommunicator = null;
+	private NXTBluetoothCommunicationAdapter myNXTBluetoothCommunicator = null;
     private Handler NXTCommHandler;
     
     private Activity thisActivity;
@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
         // no bluetooth available
         if (BluetoothAdapter.getDefaultAdapter()==null) {
             showToast(R.string.bt_initialization_failure, Toast.LENGTH_LONG);
-            destroyNXTBTCommunicator();
+            destroyNXTBluetoothCommunicator();
             finish();
             return;
         }            
@@ -75,13 +75,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        destroyNXTBTCommunicator();
+        destroyNXTBluetoothCommunicator();
     }
 
     @Override
     public void onPause() {
         //mView.unregisterListener();
-        destroyNXTBTCommunicator();
+        destroyNXTBluetoothCommunicator();
         super.onStop();
     }
 
@@ -101,7 +101,7 @@ public class MainActivity extends Activity {
                     // Get the device MAC address and start a new bt communicator thread
                     String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                     pairing = data.getExtras().getBoolean(DeviceListActivity.PAIRING);
-                    startNXTBTCommunicator(address);
+                    startNXTBluetoothCommunicator(address);
                 }
                 
                 break;
@@ -139,7 +139,7 @@ public class MainActivity extends Activity {
     	/*
     	 * YUCK!!
     	 */
-    	sendBTCmessage(NXTBTCommunicator.NO_DELAY,NXTBTCommunicator.DO_BEEP,440,500);
+    	sendBTCmessage(NXTBluetoothCommunicationAdapter.NO_DELAY,NXTBluetoothCommunicationAdapter.DO_BEEP,440,500);
     	
     }
     
@@ -150,8 +150,8 @@ public class MainActivity extends Activity {
      */
     private void createBTCommunicator() {
         // interestingly BT adapter needs to be obtained by the UI thread - so we pass it in in the constructor
-        myNXTBTCommunicator = new NXTBTCommunicator(myHandler, BluetoothAdapter.getDefaultAdapter(), getResources());
-        NXTCommHandler = myNXTBTCommunicator.getHandler();
+        myNXTBluetoothCommunicator = new NXTBluetoothCommunicationAdapter(myHandler, BluetoothAdapter.getDefaultAdapter(), getResources());
+        NXTCommHandler = myNXTBluetoothCommunicator.getHandler();
     }
 
 
@@ -159,19 +159,19 @@ public class MainActivity extends Activity {
      * Creates and starts the a thread for communication via bluetooth to the NXT robot.
      * @param mac_address The MAC address of the NXT robot.
      */
-    private void startNXTBTCommunicator(String mac_address) {
+    private void startNXTBluetoothCommunicator(String mac_address) {
         connected = false;        
         connectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
 
-        if (myNXTBTCommunicator != null) {
+        if (myNXTBluetoothCommunicator != null) {
             try {
-                myNXTBTCommunicator.destroyNXTconnection();
+                myNXTBluetoothCommunicator.destroyNXTconnection();
             }
             catch (IOException e) { }
         }
         createBTCommunicator();
-        myNXTBTCommunicator.setMACAddress(mac_address);
-        myNXTBTCommunicator.start();
+        myNXTBluetoothCommunicator.setMACAddress(mac_address);
+        myNXTBluetoothCommunicator.start();
         /*
          * TODO
          * should probably be implemented...
@@ -182,11 +182,11 @@ public class MainActivity extends Activity {
     /**
      * Sends a message for disconnecting to the communcation thread.
      */
-    public void destroyNXTBTCommunicator() {
+    public void destroyNXTBluetoothCommunicator() {
 
-        if (myNXTBTCommunicator != null) {
-            sendBTCmessage(NXTBTCommunicator.NO_DELAY, NXTBTCommunicator.DISCONNECT, 0, 0);
-            myNXTBTCommunicator = null;
+        if (myNXTBluetoothCommunicator != null) {
+            sendBTCmessage(NXTBluetoothCommunicationAdapter.NO_DELAY, NXTBluetoothCommunicationAdapter.DISCONNECT, 0, 0);
+            myNXTBluetoothCommunicator = null;
         }
 
         connected = false;
@@ -269,12 +269,12 @@ public class MainActivity extends Activity {
         @Override
         public void handleMessage(Message myMessage) {
             switch (myMessage.getData().getInt("message")) {
-                case NXTBTCommunicator.DISPLAY_TOAST:
+                case NXTBluetoothCommunicationAdapter.DISPLAY_TOAST:
                     showToast(myMessage.getData().getString("toastText"), Toast.LENGTH_SHORT);
                     break;
                     
                 
-                case NXTBTCommunicator.STATE_CONNECTED:
+                case NXTBluetoothCommunicationAdapter.STATE_CONNECTED:
                     connected = true;
                     /*
                      * We don't want to automatically get the program list
@@ -284,14 +284,14 @@ public class MainActivity extends Activity {
                     //programList = new ArrayList<String>();
                     connectingProgressDialog.dismiss();
                     //updateButtonsAndMenu();
-                    //sendBTCmessage(NXTBTCommunicator.NO_DELAY, NXTBTCommunicator.GET_FIRMWARE_VERSION, 0, 0);
+                    //sendBTCmessage(NXTBluetoothCommunicator.NO_DELAY, NXTBluetoothCommunicator.GET_FIRMWARE_VERSION, 0, 0);
                     
                     break;
                  /*
-                case NXTBTCommunicator.MOTOR_STATE:
+                case NXTBluetoothCommunicator.MOTOR_STATE:
 
-                    if (myNXTBTCommunicator != null) {
-                        byte[] motorMessage = myNXTBTCommunicator.getReturnMessage();
+                    if (myNXTBluetoothCommunicator != null) {
+                        byte[] motorMessage = myNXTBluetoothCommunicator.getReturnMessage();
                         int position = byteToInt(motorMessage[21]) + (byteToInt(motorMessage[22]) << 8) + (byteToInt(motorMessage[23]) << 16)
                                        + (byteToInt(motorMessage[24]) << 24);
                         showToast(getResources().getString(R.string.current_position) + position, Toast.LENGTH_SHORT);
@@ -299,17 +299,17 @@ public class MainActivity extends Activity {
 
                     break;
 				*/
-                case NXTBTCommunicator.STATE_CONNECTERROR_PAIRING:
+                case NXTBluetoothCommunicationAdapter.STATE_CONNECTERROR_PAIRING:
                     connectingProgressDialog.dismiss();
-                    destroyNXTBTCommunicator();
+                    destroyNXTBluetoothCommunicator();
                     break;
 
-                case NXTBTCommunicator.STATE_CONNECTERROR:
+                case NXTBluetoothCommunicationAdapter.STATE_CONNECTERROR:
                     connectingProgressDialog.dismiss();
-                case NXTBTCommunicator.STATE_RECEIVEERROR:
-                case NXTBTCommunicator.STATE_SENDERROR:
+                case NXTBluetoothCommunicationAdapter.STATE_RECEIVEERROR:
+                case NXTBluetoothCommunicationAdapter.STATE_SENDERROR:
 
-                    destroyNXTBTCommunicator();
+                    destroyNXTBluetoothCommunicator();
                     if (CommErrorPending == false) {
                         CommErrorPending = true;
                         // inform the user of the error with an AlertDialog
@@ -330,10 +330,10 @@ public class MainActivity extends Activity {
                     break;
 
                 /*
-                case NXTBTCommunicator.FIRMWARE_VERSION:
+                case NXTBluetoothCommunicator.FIRMWARE_VERSION:
 
-                    if (myNXTBTCommunicator != null) {
-                        byte[] firmwareMessage = myNXTBTCommunicator.getReturnMessage();
+                    if (myNXTBluetoothCommunicator != null) {
+                        byte[] firmwareMessage = myNXTBluetoothCommunicator.getReturnMessage();
                         // check if we know the firmware
                         boolean isLejosMindDroid = true;
                         for (int pos=0; pos<4; pos++) {
@@ -347,16 +347,16 @@ public class MainActivity extends Activity {
                             setUpByType();
                         }
                         // afterwards we search for all files on the robot
-                        sendBTCmessage(NXTBTCommunicator.NO_DELAY, NXTBTCommunicator.FIND_FILES, 0, 0);
+                        sendBTCmessage(NXTBluetoothCommunicator.NO_DELAY, NXTBluetoothCommunicator.FIND_FILES, 0, 0);
                     }
 
                     break;
 				*/
                 /*
-                case NXTBTCommunicator.FIND_FILES:
+                case NXTBluetoothCommunicator.FIND_FILES:
 
-                    if (myNXTBTCommunicator != null) {
-                        byte[] fileMessage = myNXTBTCommunicator.getReturnMessage();
+                    if (myNXTBluetoothCommunicator != null) {
+                        byte[] fileMessage = myNXTBluetoothCommunicator.getReturnMessage();
                         String fileName = new String(fileMessage, 4, 20);
                         fileName = fileName.replaceAll("\0","");
 
@@ -367,15 +367,15 @@ public class MainActivity extends Activity {
                         // find next entry with appropriate handle, 
                         // limit number of programs (in case of error (endless loop))
                         if (programList.size() <= MAX_PROGRAMS)
-                            sendBTCmessage(NXTBTCommunicator.NO_DELAY, NXTBTCommunicator.FIND_FILES,
+                            sendBTCmessage(NXTBluetoothCommunicator.NO_DELAY, NXTBluetoothCommunicator.FIND_FILES,
                                            1, byteToInt(fileMessage[3]));
                     }
 
                     break;
                     
-                case NXTBTCommunicator.PROGRAM_NAME:
-                    if (myNXTBTCommunicator != null) {
-                        byte[] returnMessage = myNXTBTCommunicator.getReturnMessage();
+                case NXTBluetoothCommunicator.PROGRAM_NAME:
+                    if (myNXTBluetoothCommunicator != null) {
+                        byte[] returnMessage = myNXTBluetoothCommunicator.getReturnMessage();
                         startRXEprogram(returnMessage[2]);
                     }
                     
