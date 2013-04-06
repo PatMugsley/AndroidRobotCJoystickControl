@@ -59,8 +59,6 @@ public class NXTBluetoothCommunicationAdapter extends Thread {
 	public static final int STOP_PROGRAM = 1009;
 	public static final int GET_PROGRAM_NAME = 1010;
 	public static final int PROGRAM_NAME = 1011;
-	public static final int SAY_TEXT = 1030;
-	public static final int VIBRATE_PHONE = 1031;
 
 	public static final int NO_DELAY = 0;
 
