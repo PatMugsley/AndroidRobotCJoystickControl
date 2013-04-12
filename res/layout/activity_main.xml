@@ -9,11 +9,38 @@
     tools:context=".MainActivity" >
 
     <Button
-        android:id="@+id/button1"
+        android:id="@+id/beep"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:onClick="doBeep"
         android:text="Beep" />
+
+    <ScrollView
+        android:id="@+id/SCROLLER_ID"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/beep"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/beep"
+        android:scrollbars="vertical" >
+
+        <TextView
+            android:id="@+id/activitylog"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="Activity Log\n" />
+    </ScrollView>
+
+    <Button
+        android:id="@+id/getfw"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/SCROLLER_ID"
+        android:layout_toRightOf="@+id/beep"
+        android:onClick="doGetFW"
+        android:text="Get F/W" />
 
 </RelativeLayout>

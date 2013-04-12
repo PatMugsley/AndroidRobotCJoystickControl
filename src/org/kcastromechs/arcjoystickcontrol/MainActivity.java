@@ -1,40 +1,60 @@
 package org.kcastromechs.arcjoystickcontrol;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 
-import org.kcastromechs.arcjoystickcontrol.NXTCommunicator.NXTBluetoothCommunicationAdapter;
+import org.kcastromechs.arcjoystickcontrol.NXTCommunicator.NXTCommunicator;
 
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
+	// Set whether or not to use bluetooth
+	// USB will be used instead when false
+	private boolean use_bluetooth=true;
+	
     private boolean connected = false;
     private boolean CommErrorPending = false;
     private boolean pairing;
     private static boolean btOnByUs = false;
 	
-	private NXTBluetoothCommunicationAdapter myNXTBluetoothCommunicator = null;
-    private Handler NXTCommHandler;
+	//private NXTBluetoothCommunicationAdapter myNXTBluetoothCommunicator = null;
+    //private Handler NXTCommHandler;
     
     private Activity thisActivity;
     private ProgressDialog connectingProgressDialog;
     private Toast reusableToast;
+	private NXTCommunicator mNXTCommunicator;
     
     private static final int REQUEST_CONNECT_DEVICE = 1000;
     private static final int REQUEST_ENABLE_BT = 2000;
-	
-    @Override
+    
+    @SuppressLint("NewApi")
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -42,6 +62,109 @@ public class MainActivity extends Activity {
         
         // create the reusable toast
         reusableToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+        
+        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+        if(deviceIterator.hasNext()){
+        	UsbDevice device = deviceIterator.next();
+        	mNXTCommunicator = new NXTCommunicator(manager,device, myHandler, getResources());
+        	connected=true;
+        	showToast("USB CONNECTED!",3000);
+        }
+    	
+        /*
+         * Code that was used to inspect the usb connection with the NXT.
+         * Keeping it here right now for reference, should be either moved 
+         * to a separate test class or activity, or deleted at some point.
+         * 
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+        while(deviceIterator.hasNext()){
+            UsbDevice device = deviceIterator.next();
+            
+            StringBuffer sb = new StringBuffer();
+            sb.append("onCreate\n").append(device.getDeviceName())
+            	.append(" ").append(device.getVendorId())
+            	.append(" ").append(device.getProductId())
+            	.append(" ").append(device.getDeviceClass())
+            	.append(" ").append(device.getDeviceSubclass())
+            	.append(" ").append(device.getDeviceProtocol());
+            
+            //showToast("onCreate\n"+device.getDeviceName()+" "+device.getVendorId()+" "+device.getProductId()
+            //		+" "+device.getDeviceClass()+" "+device.getDeviceSubclass()+" "+device.getDeviceProtocol(),3000);
+
+            
+            int icount = device.getInterfaceCount();
+            sb.append("\n\nInterface Count = ").append(icount);            
+
+            
+            for (int i=0; i<icount;i++) {
+        		UsbInterface intf = device.getInterface(i);
+        		int ifcount = intf.getEndpointCount();
+                sb.append("\nInterface ").append(i).append(" endpoints = ").append(ifcount);  
+                
+                for (int j=0; j<ifcount; j++) {
+                	UsbEndpoint mEndpoint = intf.getEndpoint(j);
+                	sb.append("\n .. if ").append(j);
+                	switch (mEndpoint.getType()) {
+                		case UsbConstants.USB_ENDPOINT_XFER_BULK:
+                			sb.append(" XFER_BULK");
+                			break; 
+                		case UsbConstants.USB_ENDPOINT_XFER_CONTROL:
+                			sb.append(" XFER_CONTROL");
+                			break;
+                		case UsbConstants.USB_ENDPOINT_XFER_INT:
+                			sb.append(" XFER_INT");
+                			break;
+                		case UsbConstants.USB_ENDPOINT_XFER_ISOC:
+                			sb.append(" XFER_ISOC");
+                	}
+                	if (mEndpoint.getDirection()==UsbConstants.USB_DIR_IN)
+                		sb.append(" DIR_IN");
+                	if (mEndpoint.getDirection()==UsbConstants.USB_DIR_OUT) {
+                		sb.append(" DIR_OUT");                		
+                		
+
+
+                	}
+                	
+                	
+                }
+            	
+            }
+            
+            showToast(sb.toString(),10000);
+            
+    		// let's see if we can make it beep 
+            // the NXT uses only 1 interface (index=0), and it has two endpoints
+            //   ... endpoint 0 is for xfer_out
+            //   ... endpoint 1 is for xfer_in
+			UsbDeviceConnection mConnection = manager.openDevice(device); 
+			UsbInterface intf = device.getInterface(0);
+			UsbEndpoint mEndpoint = intf.getEndpoint(0);
+    		mConnection.claimInterface(intf, true);
+    		byte[] message = NXTMessageUtil.getBeepMessage(440, 2500);
+    		mConnection.bulkTransfer(mEndpoint, message, message.length, 0);
+    		// really really bad to hold up the UI thread... but just for now...
+    		try {
+    			Thread.sleep(250);
+    		} catch (InterruptedException e) {
+    			
+    		}
+    		message = NXTMessageUtil.getBeepMessage(880, 500);
+    		mConnection.bulkTransfer(mEndpoint, message, message.length, 0);
+            
+    		//UsbInterface intf = mDevice.getInterface(0);
+    		//mEndpoint = intf.getEndpoint(0);
+    		//mConnection = mUsbManager.openDevice(mDevice); 
+    		//mConnection.claimInterface(intf, true);
+            
+            
+            
+        }*/
+        
+
     }
 
 
@@ -59,7 +182,7 @@ public class MainActivity extends Activity {
         // no bluetooth available
         if (BluetoothAdapter.getDefaultAdapter()==null) {
             showToast(R.string.bt_initialization_failure, Toast.LENGTH_LONG);
-            destroyNXTBluetoothCommunicator();
+            destroyNXTCommunicator();
             finish();
             return;
         }            
@@ -72,16 +195,18 @@ public class MainActivity extends Activity {
         }
     }
 
+    
+    
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        destroyNXTBluetoothCommunicator();
+        destroyNXTCommunicator();
     }
 
     @Override
     public void onPause() {
         //mView.unregisterListener();
-        destroyNXTBluetoothCommunicator();
+        destroyNXTCommunicator();
         super.onStop();
     }
 
@@ -101,7 +226,7 @@ public class MainActivity extends Activity {
                     // Get the device MAC address and start a new bt communicator thread
                     String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                     pairing = data.getExtras().getBoolean(DeviceListActivity.PAIRING);
-                    startNXTBluetoothCommunicator(address);
+                    startNXTCommunicator(address);
                 }
                 
                 break;
@@ -128,50 +253,51 @@ public class MainActivity extends Activity {
         }
     }
     
+    
+    /* *******************************************************
+     * 
+     * UI ACTION HANDLERS
+     * 
+     * *******************************************************/
+    
     /*
-     * TODO
-     * This is definitely not quite right.  This part of the code shouldn't have to know the
-     * details of connecting via BT.  Also is not very clean that we're having to know (with no
-     * compiler help) the format of the beep command.
+     * Handle the beep request form the UI
      *   
      */   
     public void doBeep(View view) {
-    	/*
-    	 * YUCK!!
-    	 */
-    	sendBTCmessage(NXTBluetoothCommunicationAdapter.NO_DELAY,NXTBluetoothCommunicationAdapter.DO_BEEP,440,500);
-    	
+    
+    	TextView tv = (TextView) findViewById(R.id.activitylog);
+    	tv.append("Beep!\n");
+    	mNXTCommunicator.playTone(880, 500);
     }
-    
-    
-    
-    /**
-     * Creates a new object for communication to the NXT robot via bluetooth and fetches the corresponding handler.
+
+    /*
+     * Handle the getFW request from the UI
      */
-    private void createBTCommunicator() {
-        // interestingly BT adapter needs to be obtained by the UI thread - so we pass it in in the constructor
-        myNXTBluetoothCommunicator = new NXTBluetoothCommunicationAdapter(myHandler, BluetoothAdapter.getDefaultAdapter(), getResources());
-        NXTCommHandler = myNXTBluetoothCommunicator.getHandler();
+    public void doGetFW(View view) {
+    	
+    	TextView tv = (TextView) findViewById(R.id.activitylog);
+    	tv.append("Get Firmware Version\n");
+    	mNXTCommunicator.getFirmwareVersion();
     }
-
-
+    
+    /* *******************************************************
+     * 
+     * END UI ACTION HANDLERS
+     * 
+     * *******************************************************/
+    
     /**
      * Creates and starts the a thread for communication via bluetooth to the NXT robot.
      * @param mac_address The MAC address of the NXT robot.
      */
-    private void startNXTBluetoothCommunicator(String mac_address) {
+    private void startNXTCommunicator(String mac_address) {
+    	
         connected = false;        
         connectingProgressDialog = ProgressDialog.show(this, "", getResources().getString(R.string.connecting_please_wait), true);
-
-        if (myNXTBluetoothCommunicator != null) {
-            try {
-                myNXTBluetoothCommunicator.destroyNXTconnection();
-            }
-            catch (IOException e) { }
-        }
-        createBTCommunicator();
-        myNXTBluetoothCommunicator.setMACAddress(mac_address);
-        myNXTBluetoothCommunicator.start();
+    	
+    	mNXTCommunicator = new NXTCommunicator(BluetoothAdapter.getDefaultAdapter(),mac_address, myHandler, getResources());
+    	 	
         /*
          * TODO
          * should probably be implemented...
@@ -180,14 +306,15 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Sends a message for disconnecting to the communcation thread.
+     * Sends a message for disconnecting to the communication thread.
      */
-    public void destroyNXTBluetoothCommunicator() {
+    public void destroyNXTCommunicator() {
+    	
+    	if (mNXTCommunicator!=null) {
+    		mNXTCommunicator.disconnect();
+    		mNXTCommunicator = null;
+    	}
 
-        if (myNXTBluetoothCommunicator != null) {
-            sendBTCmessage(NXTBluetoothCommunicationAdapter.NO_DELAY, NXTBluetoothCommunicationAdapter.DISCONNECT, 0, 0);
-            myNXTBluetoothCommunicator = null;
-        }
 
         connected = false;
         /*
@@ -197,49 +324,6 @@ public class MainActivity extends Activity {
         */
     }
 
-
-    /**
-     * Sends the message via the BTCommuncator to the robot.
-     * @param delay time to wait before sending the message.
-     * @param message the message type (as defined in BTCommucator)
-     * @param value1 first parameter
-     * @param value2 second parameter
-     */   
-    void sendBTCmessage(int delay, int message, int value1, int value2) {
-        Bundle myBundle = new Bundle();
-        myBundle.putInt("message", message);
-        myBundle.putInt("value1", value1);
-        myBundle.putInt("value2", value2);
-        Message myMessage = myHandler.obtainMessage();
-        myMessage.setData(myBundle);
-
-        if (delay == 0)
-            NXTCommHandler.sendMessage(myMessage);
-
-        else
-            NXTCommHandler.sendMessageDelayed(myMessage, delay);
-    }
-
-    /**
-     * Sends the message via the BTCommuncator to the robot.
-     * @param delay time to wait before sending the message.
-     * @param message the message type (as defined in BTCommucator)
-     * @param String a String parameter
-     */       
-    void sendBTCmessage(int delay, int message, String name) {
-        Bundle myBundle = new Bundle();
-        myBundle.putInt("message", message);
-        myBundle.putString("name", name);
-        Message myMessage = myHandler.obtainMessage();
-        myMessage.setData(myBundle);
-
-        if (delay == 0)
-            NXTCommHandler.sendMessage(myMessage);
-        else
-            NXTCommHandler.sendMessageDelayed(myMessage, delay);
-    }
-
-    
     /**
      * Displays a message as a toast
      * @param textToShow the message
@@ -266,26 +350,22 @@ public class MainActivity extends Activity {
      * Receive messages from the BTCommunicator
      */
     final Handler myHandler = new Handler() {
-        @Override
+        @SuppressLint("HandlerLeak")
+		@Override
         public void handleMessage(Message myMessage) {
+        	
             switch (myMessage.getData().getInt("message")) {
-                case NXTBluetoothCommunicationAdapter.DISPLAY_TOAST:
+                case NXTCommunicator.INFO_MESSAGE:
                     showToast(myMessage.getData().getString("toastText"), Toast.LENGTH_SHORT);
                     break;
                     
                 
-                case NXTBluetoothCommunicationAdapter.STATE_CONNECTED:
+                case NXTCommunicator.STATE_CONNECTED:
                     connected = true;
-                    /*
-                     * We don't want to automatically get the program list
-                     * 
-                     */
-
-                    //programList = new ArrayList<String>();
                     connectingProgressDialog.dismiss();
+                    showToast("connected!",3000);
+                    // TODO Should do this!
                     //updateButtonsAndMenu();
-                    //sendBTCmessage(NXTBluetoothCommunicator.NO_DELAY, NXTBluetoothCommunicator.GET_FIRMWARE_VERSION, 0, 0);
-                    
                     break;
                  /*
                 case NXTBluetoothCommunicator.MOTOR_STATE:
@@ -299,17 +379,19 @@ public class MainActivity extends Activity {
 
                     break;
 				*/
-                case NXTBluetoothCommunicationAdapter.STATE_CONNECTERROR_PAIRING:
+                case NXTCommunicator.STATE_CONNECTERROR_PAIRING:
                     connectingProgressDialog.dismiss();
-                    destroyNXTBluetoothCommunicator();
+                    destroyNXTCommunicator();
                     break;
 
-                case NXTBluetoothCommunicationAdapter.STATE_CONNECTERROR:
+                case NXTCommunicator.STATE_CONNECTERROR:
                     connectingProgressDialog.dismiss();
-                case NXTBluetoothCommunicationAdapter.STATE_RECEIVEERROR:
-                case NXTBluetoothCommunicationAdapter.STATE_SENDERROR:
+                case NXTCommunicator.STATE_RECEIVEERROR:
+                case NXTCommunicator.STATE_SENDERROR:
+                	
+                	showToast("Send or Receive Error!",3000);
 
-                    destroyNXTBluetoothCommunicator();
+                    destroyNXTCommunicator();
                     if (CommErrorPending == false) {
                         CommErrorPending = true;
                         // inform the user of the error with an AlertDialog
@@ -329,29 +411,18 @@ public class MainActivity extends Activity {
 
                     break;
 
-                /*
-                case NXTBluetoothCommunicator.FIRMWARE_VERSION:
+                
+                case NXTCommunicator.FIRMWARE_VERSION:
+                	
+                	byte[] detail = myMessage.getData().getByteArray("detail");
+                	int pmin = detail[3] & 0xFF;
+                	int pmaj = detail[4] & 0xFF;
+                	int fmin = detail[5] & 0xFF;
+                	int fmaj = detail[6] & 0xFF;
+                	TextView tv = (TextView) findViewById(R.id.activitylog);
+                	tv.append("Firmware\nprotocol: "+pmaj+"."+pmin+" | firmware:"+fmaj+"."+fmin+"\n");
+                	break;
 
-                    if (myNXTBluetoothCommunicator != null) {
-                        byte[] firmwareMessage = myNXTBluetoothCommunicator.getReturnMessage();
-                        // check if we know the firmware
-                        boolean isLejosMindDroid = true;
-                        for (int pos=0; pos<4; pos++) {
-                            if (firmwareMessage[pos + 3] != LCPMessage.FIRMWARE_VERSION_LEJOSMINDDROID[pos]) {
-                                isLejosMindDroid = false;
-                                break;
-                            }
-                        }
-                        if (isLejosMindDroid) {
-                            mRobotType = R.id.robot_type_lejos;
-                            setUpByType();
-                        }
-                        // afterwards we search for all files on the robot
-                        sendBTCmessage(NXTBluetoothCommunicator.NO_DELAY, NXTBluetoothCommunicator.FIND_FILES, 0, 0);
-                    }
-
-                    break;
-				*/
                 /*
                 case NXTBluetoothCommunicator.FIND_FILES:
 
@@ -388,8 +459,10 @@ public class MainActivity extends Activity {
     
 
     void selectNXT() {
-        Intent serverIntent = new Intent(this, DeviceListActivity.class);
-        startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+    	if (use_bluetooth) {
+    		Intent serverIntent = new Intent(this, DeviceListActivity.class);
+    		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+    	}
     }
-
+    
 }
