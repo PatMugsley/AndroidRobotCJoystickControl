@@ -234,7 +234,16 @@ public class NXTMessageUtil {
 
 		return message;
 	}
+	
+	public static byte[] getBatteryLevel() {
+		byte[] message = new byte[2];
 
+		message[0] = DIRECT_COMMAND_REPLY;
+		message[1] = GET_BATTERY_LEVEL;
+
+		return message;
+	}
+	
 	public static byte[] getFindFilesMessage(boolean findFirst, int handle,
 			String searchString) {
 		byte[] message;

@@ -29,6 +29,7 @@ public class NXTCommunicator {
 	public static final int STATE_RECEIVEERROR = 1004;
 	public static final int STATE_SENDERROR = 1005;
 	public static final int FIRMWARE_VERSION = 1006;
+	public static final int BATTERY_LEVEL = 1030;
 	public static final int FIND_FILES = 1007;
 	public static final int START_PROGRAM = 1008;
 	public static final int STOP_PROGRAM = 1009;
@@ -86,6 +87,11 @@ public class NXTCommunicator {
 	
 	public void getFirmwareVersion() {
 		sendMessageToAdapter(NXTCommunicationAdapter.NO_DELAY,NXTCommunicationAdapter.GET_FIRMWARE_VERSION,"");
+	}
+	
+	public void checkBatteryLevel() {
+		sendMessageToAdapter(NXTCommunicationAdapter.NO_DELAY,NXTCommunicationAdapter.GET_BATTERY_LEVEL,"");
+		
 	}
 
 	/**
@@ -151,5 +157,7 @@ public class NXTCommunicator {
 		sendMessageToAdapter(NXTCommunicationAdapter.NO_DELAY,
 				NXTCommunicationAdapter.DISCONNECT, 0, 0);	
 	}
+
+	
 
 }

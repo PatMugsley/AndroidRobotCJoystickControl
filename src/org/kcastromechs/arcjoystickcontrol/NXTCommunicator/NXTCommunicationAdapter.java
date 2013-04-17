@@ -23,6 +23,7 @@ public abstract class NXTCommunicationAdapter extends Thread {
 	protected static final int GET_FIRMWARE_VERSION = 70;
 	protected static final int DISCONNECT = 99;
 	protected static final int NO_DELAY = 0;
+	protected static final byte GET_BATTERY_LEVEL = 0x0B;
 	
 	//private static final UUID SERIAL_PORT_SERVICE_CLASS_UUID = UUID
 	//		.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -130,6 +131,15 @@ public abstract class NXTCommunicationAdapter extends Thread {
 							waitingForResponseMessage=false;
 						
 					}
+				} else {
+					
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						//e.printStackTrace();
+					}
+					
 				}
 				
 				// Check to see 
@@ -197,7 +207,14 @@ public abstract class NXTCommunicationAdapter extends Thread {
 				sendState(NXTCommunicator.FIRMWARE_VERSION, message);
 
 			break;
+			
+		case NXTMessageUtil.GET_BATTERY_LEVEL:
 
+			if (message.length >= 5)
+				sendState(NXTCommunicator.BATTERY_LEVEL, message);
+
+			break;
+			
 		case NXTMessageUtil.FIND_FIRST:
 		case NXTMessageUtil.FIND_NEXT:
 
@@ -278,6 +295,12 @@ public abstract class NXTCommunicationAdapter extends Thread {
 		byte[] message = NXTMessageUtil.getFirmwareVersionMessage();
 		sendMessage(message);
 	}
+	
+	private void getBatteryLevel() {
+		byte[] message = NXTMessageUtil.getBatteryLevel();
+		sendMessage(message);
+		
+	}
 
 	private void findFiles(boolean findFirst, int handle) {
 		byte[] message = NXTMessageUtil.getFindFilesMessage(findFirst, handle,
@@ -350,6 +373,9 @@ public abstract class NXTCommunicationAdapter extends Thread {
 			case GET_FIRMWARE_VERSION:
 				getFirmwareVersion();
 				break;
+			case GET_BATTERY_LEVEL:
+				getBatteryLevel();
+				break;
 			case NXTCommunicator.FIND_FILES:
 				findFiles(myMessage.getData().getInt("value1") == 0, myMessage
 						.getData().getInt("value2"));
@@ -375,6 +401,8 @@ public abstract class NXTCommunicationAdapter extends Thread {
 				break;
 			}
 		}
+
+		
 	};
 	
 	
